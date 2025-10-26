@@ -153,13 +153,12 @@ import type {
   TokenUsage,
 } from './types';
 import {
-  createSession,
-  createWebSocket,
-  fetchState,
-  selectWorkspace,
-  sendInput,
-  updateConfig,
-} from './api';
+  fetchCodexState,
+  createCodexSession,
+  createCodexWebSocket,
+  sendCodexInput
+} from './api/codex';
+import { updateGlobalConfig, selectWorkspace } from './api/config';
 
 const state = ref<AppState | null>(null);
 const composerText = ref('');
@@ -429,7 +428,7 @@ async function persistConfigField(field: keyof ConfigState, value: string): Prom
     }
   }
   try {
-    await updateCodexConfig({ [field]: value } as Partial<ConfigState>);
+    await updateGlobalConfig({ [field]: value } as Partial<ConfigState>);
   } catch (error) {
     await refreshState();
   }
@@ -444,7 +443,7 @@ async function openWorkspacePicker(): Promise<void> {
   if (selectingWorkspace.value) return;
   selectingWorkspace.value = true;
   try {
-    const path = await selectCodexWorkspace();
+    const path = await selectWorkspace();
     configForm.workspace = path;
     if (state.value) {
       state.value.workspace = path;
