@@ -55,26 +55,12 @@ class ManualSessionManager:
     def __init__(self, transport: Optional[SessionTransport] = None) -> None:
         self.transport = transport or SessionTransport()
         self.sessions: Dict[str, SessionRecord] = {}
-        self.role_templates: List[RoleTemplate] = [
-            RoleTemplate(
-                id="engineer",
-                name="工程师",
-                color="#3f51b5",
-                description="负责实现功能与修复问题。",
-            ),
-            RoleTemplate(
-                id="reviewer",
-                name="审阅者",
-                color="#009688",
-                description="负责审阅和反馈代码变更。",
-            ),
-            RoleTemplate(
-                id="qa",
-                name="测试",
-                color="#ff7043",
-                description="负责质量验证与场景演练。",
-            ),
-        ]
+        self._default_role = RoleTemplate(
+            id="default",
+            name="工程师",
+            color="#3f51b5",
+            description="默认角色",
+        )
         self._broadcast_state_lock = asyncio.Lock()
         self._workspace_path: str = _env_value_or_default(
             "REPO_ROOT", str(Path.cwd())
@@ -111,7 +97,7 @@ class ManualSessionManager:
         return AppState(
             workspace=self.workspace_path,
             config=ConfigState(**self.global_config),
-            role_templates=self.role_templates,
+            role_templates=[],
             sessions=[session.serialize() for session in self.sessions.values()],
         )
 
@@ -119,14 +105,7 @@ class ManualSessionManager:
     # Session lifecycle methods
     # ------------------------------------------------------------------ #
     async def create_session(self, payload: Dict[str, Optional[str]]) -> SessionRecord:
-        role_id = payload.get("role_id")
-        template = next(
-            (role for role in self.role_templates if role.id == role_id),
-            None,
-        )
-        if template is None:
-            raise SessionNotFoundError("角色模板不存在")
-        role_info = template.model_dump()
+        role_info = self._default_role.model_dump()
         if payload.get("name"):
             role_info["name"] = payload["name"] or role_info.get("name")
         if payload.get("color"):

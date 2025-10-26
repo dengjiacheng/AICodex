@@ -11,12 +11,11 @@ export async function fetchState(): Promise<AppState> {
   return data;
 }
 
-export async function createSession(roleId: string, name?: string, color?: string): Promise<Session> {
-  const { data } = await client.post<{ session: Session }>('/sessions', {
-    role_id: roleId,
-    name,
-    color,
-  });
+export async function createSession(name?: string, color?: string): Promise<Session> {
+  const payload: { name?: string; color?: string } = {};
+  if (name) payload.name = name;
+  if (color) payload.color = color;
+  const { data } = await client.post<{ session: Session }>('/sessions', payload);
   return data.session;
 }
 

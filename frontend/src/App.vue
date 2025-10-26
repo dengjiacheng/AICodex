@@ -352,11 +352,9 @@ function applyTokenUpdate(sessionId: string, usage: TokenUsage): void {
 async function ensureDefaultSession(snapshot: AppState): Promise<void> {
   if (ensuringSession.value) return;
   if (snapshot.sessions.length > 0) return;
-  const template = snapshot.role_templates[0];
-  if (!template) return;
   ensuringSession.value = true;
   try {
-    const session = await createSession(template.id);
+    const session = await createSession();
     activeSessionId.value = session.id;
     if (state.value) {
       state.value.sessions.push(session);
@@ -425,14 +423,8 @@ async function openWorkspacePicker(): Promise<void> {
 }
 
 async function startNewSession(): Promise<void> {
-  const templates = state.value?.role_templates ?? [];
-  if (!templates.length) {
-    alert('暂无可用角色模板，无法创建会话。');
-    return;
-  }
-  const template = templates[0];
   try {
-    const session = await createSession(template.id);
+    const session = await createSession();
     if (state.value) {
       state.value.sessions.push(session);
       for (const message of session.messages) {

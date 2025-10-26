@@ -152,7 +152,6 @@ class SessionRecord:
 
 
 class SessionCreate(BaseModel):
-    role_id: str
     name: Optional[str] = None
     color: Optional[str] = None
 
