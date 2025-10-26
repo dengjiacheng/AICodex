@@ -76,7 +76,7 @@
               </button>
               <span class="role">{{ renderMessageRole(message) }}</span>
               <span v-if="message.kind" class="kind">{{ renderMessageKind(message) }}</span>
-              <span class="timestamp">{{ formatTime(message.timestamp) }}</span>
+              <span class="timestamp">{{ formatTime(message.timestamp) }} · {{ activeSessionId }}</span>
               <span v-if="!isExpanded(message.id)" class="preview">{{ messagePreview(message) }}</span>
               <button type="button" class="copy" @click="copyMessage(message)">复制</button>
             </header>
