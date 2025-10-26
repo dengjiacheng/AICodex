@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true,
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "target": "ESNext",
+    "lib": ["ESNext", "DOM"],
+    "types": ["node"]
+  },
+  "include": ["vite.config.ts", "env.d.ts"]
+}

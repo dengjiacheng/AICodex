@@ -1,0 +1,23 @@
+# Codex CLI upstream reference
+codex_cli/
+
+# Codex auto-task state
+.codex/
+
+# Temporary working directories
+/tmp_*/
+tmp_*/
+
+# Python artifacts
+backend/__pycache__/
+backend/**/__pycache__/
+
+# Node modules
+frontend/node_modules/
+
+# Vite build output
+frontend/dist/
+
+# Misc
+*.pyc
+.DS_Store

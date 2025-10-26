@@ -1,0 +1,24 @@
+{
+  "name": "codex-multi-role-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "node -r ./scripts/setup-webcrypto.cjs node_modules/vite/bin/vite.js build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "markdown-it": "^14.1.0",
+    "pinia": "^2.1.7",
+    "vue": "^3.5.12"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.14",
+    "@vitejs/plugin-vue": "^5.1.2",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.2",
+    "vue-tsc": "^2.1.6"
+  }
+}
