@@ -60,24 +60,10 @@
         </div>
       </section>
 
-      <AutoTaskControls :workspace="configForm.workspace" />
     </aside>
 
     <main class="main-pane">
-      <header class="main-tabs">
-        <div class="tabs">
-          <button v-for="tab in mainTabs"
-            :key="tab.id"
-            type="button"
-            :class="['main-tab', { active: tab.id === activeMainTab }]"
-            @click="activeMainTab = tab.id"
-          >
-            {{ tab.label }}
-          </button>
-        </div>
-      </header>
-
-      <section v-if="activeMainTab === 'codex'" class="codex-pane">
+      <section class="codex-pane">
         <section v-if="activeSession" class="timeline" ref="timelineRef">
           <article
             v-for="message in activeSession.messages"
@@ -129,20 +115,14 @@
         </footer>
       </section>
 
-      <section v-else class="auto-pane">
-        <AutoTaskPanel :workspace="state.value?.config.workspace" />
-      </section>
     </main>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
-import { useAutoTaskStore } from './stores/autoTask';
 import MarkdownIt from 'markdown-it';
 import DropdownField from './components/DropdownField.vue';
-import AutoTaskControls from './components/AutoTaskControls.vue';
-import AutoTaskPanel from './components/AutoTaskPanel.vue';
 import { modelOptions, reasoningOptions, summaryOptions } from './options';
 import type {
   AppState,
@@ -161,15 +141,8 @@ import {
 } from './api';
 
 const state = ref<AppState | null>(null);
-const mainTabOptions = [
-  { id: 'codex' as const, label: 'CODEX' },
-  { id: 'auto' as const, label: 'AUTO CODEX' },
-] as const;
-type MainTabId = (typeof mainTabOptions)[number]['id'];
-const activeMainTab = ref<MainTabId>('codex');
 const composerText = ref('');
 const timelineRef = ref<HTMLElement | null>(null);
-const autoTaskStore = useAutoTaskStore();
 const markdown = new MarkdownIt({ linkify: true, breaks: true });
 const expandedMessages = reactive(new Set<string>());
 const selectingWorkspace = ref(false);
@@ -190,7 +163,6 @@ const configForm = reactive<ConfigState>({
 
 const sessions = computed(() => state.value?.sessions ?? []);
 const activeSession = computed<Session | undefined>(() => {
-  if (activeMainTab.value !== 'codex') return undefined;
   const list = sessions.value;
   if (!list.length) return undefined;
   if (activeSessionId.value) {
@@ -199,32 +171,6 @@ const activeSession = computed<Session | undefined>(() => {
   }
   return list[0];
 });
-
-const autoTabLabel = computed(() => {
-  if (autoTaskStore.isClarificationNeeded) return 'AUTO CODEX（待确认）';
-  switch (autoTaskStore.state.status) {
-    case 'running':
-      return 'AUTO CODEX（运行中）';
-    case 'waiting_clarification':
-      return 'AUTO CODEX（待确认）';
-    case 'error':
-      return 'AUTO CODEX（异常）';
-    default:
-      return 'AUTO CODEX';
-  }
-});
-
-const mainTabs = computed(() =>
-  mainTabOptions.map((tab) => {
-    if (tab.id === 'codex' && activeSession.value?.status === 'running') {
-      return { ...tab, label: 'CODEX（处理中…）' };
-    }
-    if (tab.id === 'auto') {
-      return { ...tab, label: autoTabLabel.value };
-    }
-    return tab;
-  }),
-);
 
 const isDarkTheme = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
 
@@ -494,7 +440,6 @@ async function startNewSession(): Promise<void> {
       }
     }
     activeSessionId.value = session.id;
-    activeMainTab.value = 'codex';
     composerText.value = '';
   } catch (error) {
     console.error('Failed to create new session', error);
@@ -504,12 +449,6 @@ async function startNewSession(): Promise<void> {
 
 onMounted(async () => {
   await refreshState();
-  try {
-    await autoTaskStore.loadInitialState();
-  } catch (error) {
-    console.error('Failed to load auto task snapshot', error);
-  }
-  autoTaskStore.connectWebSocket();
   ws = createWebSocket();
   ws.onmessage = (event) => {
     const payload = JSON.parse(event.data);
@@ -655,44 +594,6 @@ watch(
   background: var(--surface-bg, #f0f2f5);
   overflow: hidden;
 }
-.main-tabs {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  padding: 14px 24px;
-  border-bottom: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
-  background: var(--card-bg, #ffffff);
-  backdrop-filter: blur(6px);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-}
-
-.tabs {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.main-tab {
-  padding: 10px 22px;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  background: rgba(63, 81, 181, 0.08);
-  cursor: pointer;
-  font-weight: 600;
-  color: inherit;
-  transition: all 0.2s ease;
-}
-
-.main-tab.active {
-  border-color: rgba(63, 81, 181, 0.35);
-  background: rgba(63, 81, 181, 0.22);
-  box-shadow: 0 6px 16px rgba(63, 81, 181, 0.12);
-}
-
-.main-tab:not(.active):hover {
-  background: rgba(63, 81, 181, 0.14);
-}
-
 .codex-pane {
   flex: 1;
   display: flex;
@@ -854,12 +755,4 @@ textarea {
   color: rgba(0, 0, 0, 0.6);
 }
 
-.auto-pane {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 24px;
-  min-height: 0;
-  overflow: hidden;
-}
 </style>

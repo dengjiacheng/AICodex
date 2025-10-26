@@ -1,16 +1,11 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 from typing import Dict
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.auto_task.cli_runner import CodexCliRunner
-from backend.auto_task.orchestrator import AutoTaskOrchestrator
-from backend.auto_task.router import router as auto_task_router
-from backend.auto_task.storage import AutoTaskStorage
 from backend.manual_session import (
     AppState,
     ConfigPayload,
@@ -21,19 +16,11 @@ from backend.manual_session import (
     WorkspacePayload,
 )
 
-APP_TITLE = "Codex Multi-Role Gateway"
+APP_TITLE = "Codex Gateway"
 
 logging.basicConfig(level=logging.INFO)
 
-auto_task_storage = AutoTaskStorage(Path.cwd())
-auto_task_runner = CodexCliRunner()
-auto_task_orchestrator = AutoTaskOrchestrator(
-    auto_task_storage,
-    auto_task_runner,
-)
-
 manual_session_service = ManualSessionService()
-auto_task_orchestrator.set_config_provider(manual_session_service.get_auto_task_config)
 
 app = FastAPI(title=APP_TITLE)
 
@@ -45,14 +32,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auto_task_router, prefix="/auto-task", tags=["auto-task"])
-
 
 @app.on_event("startup")
-async def _startup_auto_task() -> None:
-    await auto_task_storage.ensure_structure()
-    app.state.auto_task_storage = auto_task_storage
-    app.state.auto_task_orchestrator = auto_task_orchestrator
+async def _startup_manual_session() -> None:
     app.state.session_service = manual_session_service
     app.state.session_manager = manual_session_service.manager
 
