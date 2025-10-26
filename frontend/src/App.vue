@@ -287,7 +287,7 @@ async function send(): Promise<void> {
     return;
   }
   try {
-    await sendInput(session.id, flushText);
+    await sendCodexInput(session.id, flushText);
   } catch (error) {
     composerText.value = flushText;
     const detail =
@@ -392,7 +392,7 @@ async function ensureDefaultSession(snapshot: AppState): Promise<void> {
   if (snapshot.sessions.length > 0) return;
   ensuringSession.value = true;
   try {
-    const session = await createSession();
+    const session = await createCodexSession();
     activeSessionId.value = session.id;
     if (state.value) {
       state.value.sessions.push(session);
@@ -406,7 +406,7 @@ async function ensureDefaultSession(snapshot: AppState): Promise<void> {
 }
 
 async function refreshState(): Promise<void> {
-  const data = await fetchState();
+  const data = await fetchCodexState();
   setState(data);
   await ensureDefaultSession(data);
 }
@@ -429,7 +429,7 @@ async function persistConfigField(field: keyof ConfigState, value: string): Prom
     }
   }
   try {
-    await updateConfig({ [field]: value } as Partial<ConfigState>);
+    await updateCodexConfig({ [field]: value } as Partial<ConfigState>);
   } catch (error) {
     await refreshState();
   }
@@ -444,7 +444,7 @@ async function openWorkspacePicker(): Promise<void> {
   if (selectingWorkspace.value) return;
   selectingWorkspace.value = true;
   try {
-    const path = await selectWorkspace();
+    const path = await selectCodexWorkspace();
     configForm.workspace = path;
     if (state.value) {
       state.value.workspace = path;
@@ -462,7 +462,7 @@ async function openWorkspacePicker(): Promise<void> {
 
 async function startNewSession(): Promise<void> {
   try {
-    const session = await createSession();
+    const session = await createCodexSession();
     if (state.value) {
       state.value.sessions.push(session);
       for (const message of session.messages) {
@@ -479,7 +479,7 @@ async function startNewSession(): Promise<void> {
 
 onMounted(async () => {
   await refreshState();
-  ws = createWebSocket();
+  ws = createCodexWebSocket();
   ws.onmessage = (event) => {
     const payload = JSON.parse(event.data);
     if (payload.type === 'state') {
@@ -496,7 +496,7 @@ onMounted(async () => {
   ws.onclose = () => {
     setTimeout(() => {
       if (!ws || ws.readyState === WebSocket.CLOSED) {
-        ws = createWebSocket();
+        ws = createCodexWebSocket();
       }
     }, 2000);
   };
