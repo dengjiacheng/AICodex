@@ -114,6 +114,13 @@ class ManualSessionEventAdapter:
 
         async def handle_thread_started(event: ThreadStartedEvent) -> None:
             self.session.thread_id = event.thread_id or self.session.thread_id
+            await self.emit(
+                SessionLifecycleEvent(
+                    session_id=self.session.id,
+                    reason="thread_started",
+                    returncode=None,
+                )
+            )
 
         async def handle_agent_message(event: ItemEvent) -> None:
             text = (event.payload or {}).get("text") or ""

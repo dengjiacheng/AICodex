@@ -33,6 +33,7 @@ export interface Session {
   status: string;
   status_detail?: string | null;
   messages: ChatMessage[];
+  thread_id?: string | null;
   token_usage?: TokenUsage | null;
 }
 

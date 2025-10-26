@@ -100,6 +100,7 @@ class SessionRecord:
             "status_detail": self.status_detail,
             "messages": [message.model_dump() for message in self.messages],
             "token_usage": self.token_usage,
+            "thread_id": self.thread_id,
         }
 
     def append_message(self, message: ChatMessage) -> None:

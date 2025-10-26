@@ -76,7 +76,7 @@
               </button>
               <span class="role">{{ renderMessageRole(message) }}</span>
               <span v-if="message.kind" class="kind">{{ renderMessageKind(message) }}</span>
-              <span class="timestamp">{{ formatTime(message.timestamp) }} · {{ activeSessionId }}</span>
+              <span class="timestamp">{{ formatTime(message.timestamp) }} · {{ currentThreadId || activeSessionId }}</span>
               <span v-if="!isExpanded(message.id)" class="preview">{{ messagePreview(message) }}</span>
               <button type="button" class="copy" @click="copyMessage(message)">复制</button>
             </header>
@@ -171,6 +171,8 @@ const activeSession = computed<Session | undefined>(() => {
   }
   return list[0];
 });
+
+const currentThreadId = computed(() => activeSession.value?.thread_id ?? '');
 
 const isDarkTheme = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
 
