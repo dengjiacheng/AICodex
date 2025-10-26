@@ -30,7 +30,7 @@ from .errors import (
     SessionNotFoundError,
     WorkspaceNotFoundError,
 )
-from .models import AppState, ChatMessage, ConfigState, MessagePart, RoleTemplate, SessionRecord
+from .models import AppState, ChatMessage, ConfigState, MessagePart, SessionRecord
 from .transport import SessionTransport
 
 
@@ -55,12 +55,11 @@ class ManualSessionManager:
     def __init__(self, transport: Optional[SessionTransport] = None) -> None:
         self.transport = transport or SessionTransport()
         self.sessions: Dict[str, SessionRecord] = {}
-        self._default_role = RoleTemplate(
-            id="default",
-            name="工程师",
-            color="#3f51b5",
-            description="默认角色",
-        )
+        self._default_role = {
+            "id": "default",
+            "name": "工程师",
+            "color": "#3f51b5",
+        }
         self._broadcast_state_lock = asyncio.Lock()
         self._workspace_path: str = _env_value_or_default(
             "REPO_ROOT", str(Path.cwd())
@@ -105,7 +104,7 @@ class ManualSessionManager:
     # Session lifecycle methods
     # ------------------------------------------------------------------ #
     async def create_session(self, payload: Dict[str, Optional[str]]) -> SessionRecord:
-        role_info = self._default_role.model_dump()
+        role_info = dict(self._default_role)
         if payload.get("name"):
             role_info["name"] = payload["name"] or role_info.get("name")
         if payload.get("color"):

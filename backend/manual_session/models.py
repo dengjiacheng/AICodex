@@ -50,17 +50,10 @@ class ConfigState(BaseModel):
     sandbox: str
 
 
-class RoleTemplate(BaseModel):
-    id: str
-    name: str
-    color: str
-    description: Optional[str] = None
-
 
 class AppState(BaseModel):
     workspace: str
     config: ConfigState
-    role_templates: List[RoleTemplate]
     sessions: List[Dict[str, object]]
 
 
