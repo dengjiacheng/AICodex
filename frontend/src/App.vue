@@ -63,7 +63,21 @@
     </aside>
 
     <main class="main-pane">
-      <section class="codex-pane">
+      <header class="main-tabs">
+        <div class="tabs">
+          <button
+            v-for="tab in mainTabs"
+            :key="tab.id"
+            type="button"
+            :class="['main-tab', { active: tab.id === activeMainTab }]"
+            @click="activeMainTab = tab.id"
+          >
+            {{ tab.label }}
+          </button>
+        </div>
+      </header>
+
+      <section v-if="activeMainTab === 'codex'" class="codex-pane">
         <section v-if="activeSession" class="timeline" ref="timelineRef">
           <article
             v-for="message in activeSession.messages"
@@ -115,6 +129,13 @@
         </footer>
       </section>
 
+      <section v-else class="auto-placeholder">
+        <div class="placeholder-card">
+          <h2>AUTO CODEX</h2>
+          <p>即将上线，敬请期待。</p>
+        </div>
+      </section>
+
     </main>
   </div>
 </template>
@@ -162,6 +183,12 @@ const configForm = reactive<ConfigState>({
 });
 
 const sessions = computed(() => state.value?.sessions ?? []);
+const mainTabOptions = [
+  { id: 'codex' as const, label: 'CODEX' },
+  { id: 'auto' as const, label: 'AUTO CODEX' },
+] as const;
+type MainTabId = (typeof mainTabOptions)[number]['id'];
+const activeMainTab = ref<MainTabId>('codex');
 const activeSession = computed<Session | undefined>(() => {
   const list = sessions.value;
   if (!list.length) return undefined;
@@ -173,6 +200,15 @@ const activeSession = computed<Session | undefined>(() => {
 });
 
 const currentThreadId = computed(() => activeSession.value?.thread_id ?? '');
+
+const mainTabs = computed(() =>
+  mainTabOptions.map((tab) => {
+    if (tab.id === 'codex' && activeSession.value?.status === 'running') {
+      return { ...tab, label: 'CODEX（处理中…）' };
+    }
+    return tab;
+  }),
+);
 
 const isDarkTheme = window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
 
@@ -588,6 +624,44 @@ watch(
   background: var(--surface-bg, #f0f2f5);
   overflow: hidden;
 }
+
+.main-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+  background: var(--card-bg, #ffffff);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.main-tab {
+  padding: 10px 22px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: rgba(63, 81, 181, 0.08);
+  cursor: pointer;
+  font-weight: 600;
+  color: inherit;
+  transition: all 0.2s ease;
+}
+
+.main-tab.active {
+  border-color: rgba(63, 81, 181, 0.35);
+  background: rgba(63, 81, 181, 0.22);
+  box-shadow: 0 6px 16px rgba(63, 81, 181, 0.12);
+}
+
+.main-tab:not(.active):hover {
+  background: rgba(63, 81, 181, 0.14);
+}
 .codex-pane {
   flex: 1;
   display: flex;
@@ -602,6 +676,33 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.auto-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-bg, #f0f2f5);
+}
+
+.placeholder-card {
+  padding: 32px 40px;
+  border-radius: 16px;
+  background: var(--card-bg, #ffffff);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.12);
+  text-align: center;
+  max-width: 320px;
+}
+
+.placeholder-card h2 {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+
+.placeholder-card p {
+  margin: 0;
+  color: rgba(15, 23, 42, 0.6);
 }
 
 .message {
