@@ -28,9 +28,6 @@ class ManualSessionService:
     def serialize(self) -> AppState:
         return self.manager.serialize()
 
-    def get_auto_task_config(self) -> Dict[str, str]:
-        return self.manager.get_auto_task_config()
-
     # ------------------------------------------------------------------ #
     # Wrapped operations with unified error handling
     # ------------------------------------------------------------------ #

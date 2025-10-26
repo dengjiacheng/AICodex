@@ -49,11 +49,9 @@ backend/manual_session/
 5. **清理与回归**
    - 删除 `backend/app.py` 中已迁移的类/方法，仅保留 FastAPI app 定义与路由绑定。
    - 更新现有 `tests`（增加新的单测覆盖 transport/dispatcher 交互、异常路径）。
-   - 运行现有测试套件，保证改动不破坏自动任务模块。
+   - 运行现有测试套件，保证改动不会引入回归。
 
 ## 风险与缓解
-- **耦合影响自动任务**：计划保持 auto-task 使用现有接口，不触及 `AutoTaskOrchestrator`。
-  - *缓解*：在迁移过程中保留 `manager.get_auto_task_config()` 等接口，并确保导出兼容。
 - **广播协议变更风险**：计划初期确保输出 payload 与现有结构兼容，待前端适配后再增量扩展。
   - *缓解*：添加契约测试验证 `message`/`state` 事件结构一致。
 - **大型重构回归风险**：拆分为多个提交步骤，并在每阶段运行 `pytest backend/tests`。

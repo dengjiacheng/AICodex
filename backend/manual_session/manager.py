@@ -115,9 +115,6 @@ class ManualSessionManager:
             sessions=[session.serialize() for session in self.sessions.values()],
         )
 
-    def get_auto_task_config(self) -> Dict[str, str]:
-        return dict(self.global_config)
-
     # ------------------------------------------------------------------ #
     # Session lifecycle methods
     # ------------------------------------------------------------------ #
