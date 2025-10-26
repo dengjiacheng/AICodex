@@ -15,6 +15,7 @@ from asyncio.subprocess import Process
 
 from backend.codex_client import CodexExecConfig, consume_events
 
+from .config import GlobalConfig
 from .dispatcher import (
     ManualSessionEventAdapter,
     SessionEvent,
@@ -34,13 +35,6 @@ from .models import AppState, ChatMessage, ConfigState, MessagePart, SessionReco
 from .transport import SessionTransport
 
 
-def _env_value_or_default(key: str, fallback: str) -> str:
-    value = os.environ.get(key)
-    if not value:
-        return fallback
-    trimmed = value.strip()
-    return trimmed or fallback
-
 
 class ManualSessionManager:
     """
@@ -56,28 +50,15 @@ class ManualSessionManager:
         self.transport = transport or SessionTransport()
         self.sessions: Dict[str, SessionRecord] = {}
         self._broadcast_state_lock = asyncio.Lock()
-        self._workspace_path: str = _env_value_or_default(
-            "REPO_ROOT", str(Path.cwd())
-        )
-        self.default_command: str = _env_value_or_default("CODEX_CMD", "codex")
         self._resolved_path_env: Optional[str] = None
-        self.global_config: Dict[str, str] = {
-            "command": self.default_command,
-            "args": "",
-            "workspace": self.workspace_path,
-            "model": "gpt-5-codex",
-            "reasoning": "high",
-            "summary": "auto",
-            "approval": "never",
-            "sandbox": "danger-full-access",
-        }
+        self.global_config = GlobalConfig()
 
     # ------------------------------------------------------------------ #
     # Public properties & helpers
     # ------------------------------------------------------------------ #
     @property
     def workspace_path(self) -> str:
-        return self._workspace_path
+        return self.global_config.workspace
 
     def now_iso(self) -> str:
         return (
@@ -90,7 +71,7 @@ class ManualSessionManager:
     def serialize(self) -> AppState:
         return AppState(
             workspace=self.workspace_path,
-            config=ConfigState(**self.global_config),
+            config=ConfigState(**self.global_config.as_state()),
             sessions=[session.serialize() for session in self.sessions.values()],
         )
 
@@ -104,7 +85,7 @@ class ManualSessionManager:
             'color': payload.get('color') or '#3f51b5',
         }
         session_id = str(uuid.uuid4())
-        cfg = self.global_config
+        cfg = self.global_config.as_state()
         session = SessionRecord(
             id=session_id,
             role=role_info,
@@ -269,38 +250,27 @@ class ManualSessionManager:
     # ------------------------------------------------------------------ #
     async def update_workspace(self, path: str) -> None:
         resolved = str(Path(path).expanduser().resolve())
-        self._workspace_path = resolved
+        self.global_config.workspace = resolved
         self._resolved_path_env = None
         await self._broadcast_state()
 
     async def apply_config(self, payload: Dict[str, Optional[str]]) -> None:
         updates = {key: value for key, value in payload.items() if value is not None}
-        if "command" in updates:
-            value = (updates["command"] or "").strip()
-            if not value:
-                raise InvalidSessionInputError("命令不能为空")
-            self.global_config["command"] = value
-        if "args" in updates:
-            self.global_config["args"] = updates["args"] or ""
-        if "workspace" in updates:
-            workspace = updates["workspace"] or ""
-            if workspace:
-                resolved = str(Path(workspace).expanduser().resolve())
-                self.global_config["workspace"] = resolved
-                self._workspace_path = resolved
-                self._resolved_path_env = None
-        for key in ("model", "reasoning", "summary", "approval", "sandbox"):
-            if key in updates:
-                self.global_config[key] = updates[key] or self.global_config[key]
+        try:
+            self.global_config.update(updates)
+        except ValueError as exc:
+            raise InvalidSessionInputError(str(exc)) from exc
+        if "workspace" in updates and updates["workspace"]:
+            self._resolved_path_env = None
         for session in self.sessions.values():
-            session.command = self.global_config["command"]
-            session.args = self.global_config["args"]
-            session.workspace = self.global_config["workspace"]
-            session.model = self.global_config["model"]
-            session.reasoning = self.global_config["reasoning"]
-            session.summary = self.global_config["summary"]
-            session.approval = self.global_config["approval"]
-            session.sandbox = self.global_config["sandbox"]
+            session.command = self.global_config.command
+            session.args = self.global_config.args
+            session.workspace = self.global_config.workspace
+            session.model = self.global_config.model
+            session.reasoning = self.global_config.reasoning
+            session.summary = self.global_config.summary
+            session.approval = self.global_config.approval
+            session.sandbox = self.global_config.sandbox
         await self._broadcast_state()
 
     async def select_directory(self) -> str:
