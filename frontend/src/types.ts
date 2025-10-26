@@ -13,14 +13,9 @@ export interface ChatMessage {
   origin_session?: string | null;
 }
 
-export interface RoleTemplate {
+export interface SessionRoleInfo {
   id: string;
   name: string;
-  color: string;
-  description?: string;
-}
-
-export interface SessionRoleInfo extends RoleTemplate {
   color: string;
 }
 
@@ -71,7 +66,6 @@ export interface ConfigState {
 export interface AppState {
   workspace: string;
   config: ConfigState;
-  role_templates: RoleTemplate[];
   sessions: Session[];
 }
 

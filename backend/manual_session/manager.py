@@ -55,11 +55,6 @@ class ManualSessionManager:
     def __init__(self, transport: Optional[SessionTransport] = None) -> None:
         self.transport = transport or SessionTransport()
         self.sessions: Dict[str, SessionRecord] = {}
-        self._default_role = {
-            "id": "default",
-            "name": "工程师",
-            "color": "#3f51b5",
-        }
         self._broadcast_state_lock = asyncio.Lock()
         self._workspace_path: str = _env_value_or_default(
             "REPO_ROOT", str(Path.cwd())
@@ -96,7 +91,6 @@ class ManualSessionManager:
         return AppState(
             workspace=self.workspace_path,
             config=ConfigState(**self.global_config),
-            role_templates=[],
             sessions=[session.serialize() for session in self.sessions.values()],
         )
 
@@ -104,11 +98,11 @@ class ManualSessionManager:
     # Session lifecycle methods
     # ------------------------------------------------------------------ #
     async def create_session(self, payload: Dict[str, Optional[str]]) -> SessionRecord:
-        role_info = dict(self._default_role)
-        if payload.get("name"):
-            role_info["name"] = payload["name"] or role_info.get("name")
-        if payload.get("color"):
-            role_info["color"] = payload["color"] or role_info.get("color")
+        role_info = {
+            'id': 'default',
+            'name': payload.get('name') or '工程师',
+            'color': payload.get('color') or '#3f51b5',
+        }
         session_id = str(uuid.uuid4())
         cfg = self.global_config
         session = SessionRecord(
