@@ -621,10 +621,6 @@ watch(
   border-left: 4px solid #009688;
 }
 
-.message.command {
-  border-left: 4px solid #795548;
-}
-
 .message header {
   display: flex;
   align-items: center;

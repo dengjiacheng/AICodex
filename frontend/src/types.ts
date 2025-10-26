@@ -5,7 +5,7 @@ export interface MessagePart {
 
 export interface ChatMessage {
   id: string;
-  role: 'user' | 'codex' | 'system' | 'command';
+  role: 'user' | 'codex' | 'system';
   timestamp: string;
   parts: MessagePart[];
   kind?: string | null;
